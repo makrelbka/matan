@@ -1,13 +1,13 @@
-import matplotlib.pyplot as f
+import matplotlib.pyplot as painter
 import math
 
 
 
-# def start(i, exp):
-#     return f.Rectangle(((i+1)*exact_len, 0), exact_len, exp, edgecolor='r', facecolor='black')
+# def start(i, formula):
+#     return painter.Rectangle(((i+1)*step_len, 0), step_len, formula, edgecolor='r', facecolor='black')
 
-# def end(i, exp):
-#     return f.Rectangle((i*exact_len, 0), exact_len, exp, edgecolor='r', facecolor='black')
+# def end(i, formula):
+#     return painter.Rectangle((i*step_len, 0), step_len, formula, edgecolor='r', facecolor='black')
 
 # def middle():
 #     return 0
@@ -18,16 +18,16 @@ import math
 n = 100
 start = 1
 end = 2
-exact_len = (end - start) / n
+step_len = (end - start) / n
 x = start
 while (x < end):
-    exp = math.e ** x # формула
-    rectangle = f.Rectangle((x, 0), exact_len, exp, edgecolor='r', facecolor='black')
-    x += exact_len
-    f.gca().add_patch(rectangle)
+    formula = math.e ** x # формула
+    rectangle = painter.Rectangle((x, 0), step_len, formula, edgecolor='r', facecolor='black')
+    x += step_len
+    painter.gca().add_patch(rectangle)
 
 # координаты начала, длина, высота, красота 
-f.xlim(0, 2)
-f.ylim(0, 10)
-f.grid(True)
-f.show()
+painter.xlim(0, 2)
+painter.ylim(0, 10)
+painter.grid(True)
+painter.show()
