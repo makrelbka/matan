@@ -28,9 +28,12 @@ class CalculatorUtils:
     @staticmethod
     def get_formula_value_at(x: int, settings: Settings) -> int:
         match settings.task:
-            case 2: return math.e ** x
+            case 2:  return math.e ** x
             case 10: return math.e ** (2 * x)
-            case _: raise Exception('Unsupported task')
+            case 22: return x ** 3
+            case 26: return math.e ** (2 * x)
+            case 31: return 3 ** x 
+            case _:  raise Exception('Unsupported task')
 
     @staticmethod
     def calculate_graph_points(settings: Settings) -> list[Point]:
@@ -75,10 +78,21 @@ class Drawer:
     def create_integral_rectangle(self, point: Point, delta_x: int, delta_x_shift: int) -> plt.Rectangle:
         return plt.Rectangle((point.x - delta_x_shift, 0), delta_x, point.y, edgecolor='red', facecolor='red')
 
+    def get_formula_text(self) -> str:
+        match self.__settings.task:
+            case 2:  return r'$y = e^x$'
+            case 10: return r'$y = e^2x$'
+            case 22: return r'$y = x^3$'
+            case 26: return r'$y = e^2x$'
+            case 31: return r'$y = 3^x$'
+            case _:  raise Exception('Unsupported task')
+
     def create_window(self) -> None:
+        plt.subplots_adjust(bottom=0.25)
+        plt.title(self.get_formula_text(), fontsize=20)
         plt.xlim(self.__settings.start, self.__settings.end)
-        plt.ylim(0, max(point.y for point in self.__points))
-        plt.grid(linestyle="--",alpha=0.5,zorder=1)
+        plt.ylim(min(point.y for point in self.__points) - 1, max(point.y for point in self.__points) + 1)
+        plt.grid(linestyle="--", alpha=0.5, zorder=0)
         plt.show()
 
     def draw_integral_sum(self) -> None:
@@ -115,11 +129,11 @@ def read_settings(args: list[str]) -> Settings:
     #     equipment = Equipment(int(args[4]))
     # )
     settings = Settings(
-        task = 2,
-        start = 0,
-        end = 1,
-        accuracy = 30,
-        equipment = Equipment.RANDOM
+        task = 22,
+        start = -2,
+        end = 2,
+        accuracy = 100,
+        equipment = Equipment.LEFT
     )
     return settings
 
