@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.widgets import TextBox
 import math
 import random
 import sys
@@ -65,6 +66,76 @@ class Drawer:
     def __init__(self, settings: Settings):
         self.__settings = settings
         self.__points = CalculatorUtils.calculate_graph_points(settings)
+        _, self.__axes = plt.subplots()
+
+        # accuracy
+        self.accuracy_box = plt.axes([0.7, 0.08, 0.2, 0.05])
+        self.accuracy_text_box = TextBox(self.accuracy_box, 'Accuracy', initial=str(settings.accuracy))
+        self.accuracy_text_box.on_submit(self.on_accuracy_change)
+
+        # task
+        self.task_box = plt.axes([0.7, 0.01, 0.2, 0.05])
+        self.task_text_box = TextBox(self.task_box, 'Task', initial=str(settings.task))
+        self.task_text_box.on_submit(self.on_task_change)
+
+        # start
+        self.start_box = plt.axes([0.15, 0.08, 0.2, 0.05])
+        self.start_text_box = TextBox(self.start_box, 'Start', initial=str(settings.start))
+        self.start_text_box.on_submit(self.on_start_change)
+
+        # end
+        self.end_box = plt.axes([0.15, 0.01, 0.2, 0.05])
+        self.end_text_box = TextBox(self.end_box, 'End', initial=str(settings.end))
+        self.end_text_box.on_submit(self.on_end_change)
+
+        # # equiptment
+        # self.equiptment_box = plt.axes([0.3, 0.01, 0.2, 0.05])
+        # self.equiptment_text_box = TextBox(self.equiptment_box, 'End', initial=str(settings.equipment))
+        # self.equiptment_text_box.on_submit(self.on_equiptment_change)
+    
+    def on_accuracy_change(self, text):
+        try:
+            new_accuracy = int(text)
+            self.__settings.accuracy = new_accuracy
+            self.update()
+        except ValueError:
+            pass
+
+    def on_task_change(self, text):
+        try:
+            new_task = int(text)
+            self.__settings.task = new_task
+            self.update()
+        except ValueError:
+            pass
+
+    def on_start_change(self, text):
+        try:
+            new_start = int(text)
+            self.__settings.start = new_start
+            self.update()
+        except ValueError:
+            pass
+
+    def on_end_change(self, text):
+        try:
+            new_end = int(text)
+            self.__settings.end = new_end
+            self.update()
+        except ValueError:
+            pass
+
+    def on_equipment_change(self, text):
+        try:
+            new_equipment = int(text)
+            self.__settings.equipment = Equipment(new_equipment)
+            self.update()
+        except ValueError:
+            pass
+
+    def update(self):
+        self.__points = CalculatorUtils.calculate_graph_points(self.__settings)
+        self.draw()
 
     def create_integral_shape(self) -> list[plt.Rectangle]:
         rectangles = []
@@ -81,6 +152,7 @@ class Drawer:
 
     def get_formula_text(self) -> str:
         match self.__settings.task:
+            case 1: return r'$y=\sin(x)$'
             case 2:  return r'$y = e^x$'
             case 10: return r'$y = e^{2x}$'
             case 22: return r'$y = x^3$'
@@ -89,27 +161,18 @@ class Drawer:
             case _:  raise Exception('Unsupported task')
 
     def create_window(self) -> None:
-        plt.subplots_adjust(bottom=0.25)
-        plt.title(self.get_formula_text(), fontsize=20)
-        plt.xlim(self.__settings.start, self.__settings.end)
-        plt.ylim(min(point.y for point in self.__points) - 1, max(point.y for point in self.__points) + 1)
-        plt.grid(linestyle="--", alpha=0.5, zorder=0)
+        self.__axes.set_title(self.get_formula_text(), fontsize=20)
+        self.__axes.set_xlim(self.__settings.start, self.__settings.end)
+        self.__axes.set_ylim(min(point.y for point in self.__points) - 1, max(point.y for point in self.__points) + 1)
+        self.__axes.grid(linestyle="--", alpha=0.5, zorder=0)
+        self.__axes.set_position([0.1, 0.3, 0.8, 0.6])
 
     def draw_integral_sum(self) -> None:
         rectangles = self.create_integral_shape()
         for rectangle in rectangles:
-            plt.gca().add_patch(rectangle)
+            self.__axes.add_patch(rectangle)
 
     def draw_graph(self) -> None:
-        fig, ax = plt.subplots()
-        x = np.linspace(0, 2*np.pi, 100)
-        y = np.sin(x)
-        line, = ax.plot(x, y)
-        ax.set_title('График функции синуса')
-        ax.set_xlabel('Угол')
-        ax.set_ylabel('Значение функции синуса')
-        ax.grid(True)
-
         settings_for_graph = Settings(
             task = self.__settings.task,
             start = self.__settings.start,
@@ -118,25 +181,15 @@ class Drawer:
             equipment = Equipment.RANDOM
         )
         points = CalculatorUtils.calculate_graph_points(settings_for_graph)
-        plt.plot([point.x for point in points], [point.y for point in points], color='black', linewidth=0.8)
+        self.__axes.plot([point.x for point in points], [point.y for point in points], color='black', linewidth=0.8)
         
     def draw(self) -> None:
+        self.__axes.clear()
         self.draw_graph()
         self.draw_integral_sum()
         self.create_window()
 
 def read_settings(args: list[str]) -> Settings:
-    # if len(args) < 5:
-    #     print('Usage: python3 lab.py <start> <end> <accuracy> <equipment>')
-    #     sys.exit(1)
-
-    # settings = Settings(
-    #     task = 2,
-    #     start = int(args[1]),
-    #     end = int(args[2]),
-    #     accuracy = int(args[3]),
-    #     equipment = Equipment(int(args[4]))
-    # )
     settings = Settings(
         task = 1,
         start = -5,
