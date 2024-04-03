@@ -28,6 +28,7 @@ class CalculatorUtils:
     @staticmethod
     def get_formula_value_at(x: int, settings: Settings) -> int:
         match settings.task:
+            case 1:  return math.sin(x)
             case 2:  return math.e ** x
             case 10: return math.e ** (2 * x)
             case 22: return x ** 3
@@ -81,9 +82,9 @@ class Drawer:
     def get_formula_text(self) -> str:
         match self.__settings.task:
             case 2:  return r'$y = e^x$'
-            case 10: return r'$y = e^2x$'
+            case 10: return r'$y = e^{2x}$'
             case 22: return r'$y = x^3$'
-            case 26: return r'$y = e^2x$'
+            case 26: return r'$y = e^{2x}$'
             case 31: return r'$y = 3^x$'
             case _:  raise Exception('Unsupported task')
 
@@ -93,7 +94,6 @@ class Drawer:
         plt.xlim(self.__settings.start, self.__settings.end)
         plt.ylim(min(point.y for point in self.__points) - 1, max(point.y for point in self.__points) + 1)
         plt.grid(linestyle="--", alpha=0.5, zorder=0)
-        plt.show()
 
     def draw_integral_sum(self) -> None:
         rectangles = self.create_integral_shape()
@@ -101,6 +101,15 @@ class Drawer:
             plt.gca().add_patch(rectangle)
 
     def draw_graph(self) -> None:
+        fig, ax = plt.subplots()
+        x = np.linspace(0, 2*np.pi, 100)
+        y = np.sin(x)
+        line, = ax.plot(x, y)
+        ax.set_title('График функции синуса')
+        ax.set_xlabel('Угол')
+        ax.set_ylabel('Значение функции синуса')
+        ax.grid(True)
+
         settings_for_graph = Settings(
             task = self.__settings.task,
             start = self.__settings.start,
@@ -129,14 +138,14 @@ def read_settings(args: list[str]) -> Settings:
     #     equipment = Equipment(int(args[4]))
     # )
     settings = Settings(
-        task = 22,
-        start = -2,
-        end = 2,
+        task = 1,
+        start = -5,
+        end = 5,
         accuracy = 100,
-        equipment = Equipment.LEFT
+        equipment = Equipment.MIDDLE
     )
     return settings
 
 if __name__ == '__main__':
-    drawer = Drawer(read_settings(sys.argv))
-    drawer.draw()
+    Drawer(read_settings(sys.argv)).draw()
+    plt.show()
