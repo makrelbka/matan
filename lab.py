@@ -29,7 +29,6 @@ class CalculatorUtils:
     @staticmethod
     def get_formula_value_at(x: int, settings: Settings) -> int:
         match settings.task:
-            case 1:  return math.sin(x)
             case 2:  return math.e ** x
             case 10: return math.e ** (2 * x)
             case 22: return x ** 3
@@ -47,6 +46,25 @@ class CalculatorUtils:
             points.append(Point(x, CalculatorUtils.get_formula_value_at(x, settings)))
 
         return points
+    
+    @staticmethod
+    def calculate_integral_sum(settings: Settings) -> float:
+        integral_sum = 0
+
+        delta_x = CalculatorUtils.calculate_delta_x(settings)
+        delta_x_shift = CalculatorUtils.calculate_integral_shape_shift(settings)
+        for i in range(settings.accuracy + 1):
+            x = settings.start + i * delta_x
+            integral_sum += delta_x * CalculatorUtils.get_formula_value_at(x, settings)
+
+        match settings.equipment:
+            case Equipment.LEFT:   integral_sum -= CalculatorUtils.get_formula_value_at(settings.start, settings) * delta_x
+            case Equipment.RIGHT:  integral_sum -= CalculatorUtils.get_formula_value_at(settings.end, settings) * delta_x
+            case Equipment.MIDDLE: integral_sum -= ((CalculatorUtils.get_formula_value_at(settings.start, settings) + CalculatorUtils.get_formula_value_at(settings.end, settings)) / 2) * delta_x
+            case Equipment.RANDOM: integral_sum -= CalculatorUtils.get_formula_value_at(settings.start, settings) * delta_x_shift + \
+                                                   CalculatorUtils.get_formula_value_at(settings.end, settings) * (delta_x - delta_x_shift)
+
+        return integral_sum
 
     @staticmethod
     def calculate_delta_x(settings: Settings) -> int:
@@ -87,11 +105,6 @@ class Drawer:
         self.end_box = plt.axes([0.15, 0.01, 0.2, 0.05])
         self.end_text_box = TextBox(self.end_box, 'End', initial=str(settings.end))
         self.end_text_box.on_submit(self.on_end_change)
-
-        # # equiptment
-        # self.equiptment_box = plt.axes([0.3, 0.01, 0.2, 0.05])
-        # self.equiptment_text_box = TextBox(self.equiptment_box, 'End', initial=str(settings.equipment))
-        # self.equiptment_text_box.on_submit(self.on_equiptment_change)
     
     def on_accuracy_change(self, text):
         try:
@@ -152,7 +165,6 @@ class Drawer:
 
     def get_formula_text(self) -> str:
         match self.__settings.task:
-            case 1: return r'$y=\sin(x)$'
             case 2:  return r'$y = e^x$'
             case 10: return r'$y = e^{2x}$'
             case 22: return r'$y = x^3$'
@@ -191,14 +203,15 @@ class Drawer:
 
 def read_settings(args: list[str]) -> Settings:
     settings = Settings(
-        task = 1,
-        start = -5,
-        end = 5,
-        accuracy = 100,
+        task = 2,
+        start = 0,
+        end = 1,
+        accuracy = 10,
         equipment = Equipment.MIDDLE
     )
     return settings
 
 if __name__ == '__main__':
     Drawer(read_settings(sys.argv)).draw()
+    print(CalculatorUtils.calculate_integral_sum(read_settings(sys.argv)))
     plt.show()
