@@ -1,7 +1,8 @@
-import matplotlib.pyplot as painter
+import matplotlib.pyplot as plt
 import math
 import random
 import sys
+from dataclasses import dataclass
 from enum import Enum
 
 class Equipment(Enum):
@@ -10,77 +11,118 @@ class Equipment(Enum):
     MIDDLE = 3
     RANDOM = 4
 
-
+@dataclass
 class Point:
-    def __init__(self, x: int, y: int):
-        self.__x = x
-        self.__y = y
+    x: int
+    y: int
 
-    @property
-    def x(self):
-        return self.__x
-    
-    @property
-    def y(self):
-        return self.__y
+@dataclass
+class Settings:
+    task: int
+    start: int
+    end: int
+    accuracy: int
+    equipment: Equipment
 
-def get_formula_value_at(x: int) -> int:
-    return math.e ** x
+class CalculatorUtils:
+    @staticmethod
+    def get_formula_value_at(x: int, settings: Settings) -> int:
+        match settings.task:
+            case 2: return math.e ** x
+            case 10: return math.e ** (2 * x)
+            case _: raise Exception('Unsupported task')
 
-def calculate_delta_x(start: int, end: int, accuracy: int) -> int:
-    return (end - start) / accuracy
+    @staticmethod
+    def calculate_graph_points(settings: Settings) -> list[Point]:
+        points = []
 
-def calculate_graph_points(start: int, end: int, accuracy: int) -> list[Point]:
-    points = []
+        delta_x = CalculatorUtils.calculate_delta_x(settings)
+        for i in range(settings.accuracy + 1):
+            x = settings.start + i * delta_x
+            points.append(Point(x, CalculatorUtils.get_formula_value_at(x, settings)))
 
-    delta_x = calculate_delta_x(start, end, accuracy)
-    for i in range(accuracy + 1):
-        x = start + i * delta_x
-        points.append(Point(x, get_formula_value_at(x)))
+        return points
 
-    return points
+    @staticmethod
+    def calculate_delta_x(settings: Settings) -> int:
+        return (settings.end - settings.start) / settings.accuracy
 
-def calculate_integral_shape_shift(delta_x: int, equipment: Equipment):
-    match equipment:
-        case Equipment.LEFT:   return 0
-        case Equipment.RIGHT:  return delta_x
-        case Equipment.MIDDLE: return delta_x / 2
-        case Equipment.RANDOM: return random.uniform(0, delta_x)
-        case _:                raise Exception('Invalid equipment')
+    @staticmethod
+    def calculate_integral_shape_shift(settings: Settings) -> int:
+        delta_x = CalculatorUtils.calculate_delta_x(settings)
+        match settings.equipment:
+            case Equipment.LEFT:   return 0
+            case Equipment.RIGHT:  return delta_x
+            case Equipment.MIDDLE: return delta_x / 2
+            case Equipment.RANDOM: return random.uniform(0, delta_x)
+            case _:                raise Exception('Unsupported equipment')
 
-def create_integral_rectangle(point: Point, delta_x: int, delta_x_shift: int) -> painter.Rectangle:
-    return painter.Rectangle((point.x - delta_x_shift, 0), delta_x, point.y, edgecolor='r', facecolor='black')
+class Drawer:
+    def __init__(self, settings: Settings):
+        self.__settings = settings
+        self.__points = CalculatorUtils.calculate_graph_points(settings)
 
-def create_integral_shape(points: list[Point], accuracy: int, equipment: Equipment) -> list[painter.Rectangle]:
-    rectangles = []
+    def create_integral_shape(self) -> list[plt.Rectangle]:
+        rectangles = []
 
-    delta_x = calculate_delta_x(points[0].x, points[-1].x, accuracy)
-    delta_x_shift = calculate_integral_shape_shift(delta_x, equipment)
-    for point in points:
-        rectangles.append(create_integral_rectangle(point, delta_x, delta_x_shift))
+        delta_x = CalculatorUtils.calculate_delta_x(self.__settings)
+        delta_x_shift = CalculatorUtils.calculate_integral_shape_shift(self.__settings)
+        for point in self.__points:
+            rectangles.append(self.create_integral_rectangle(point, delta_x, delta_x_shift))
 
-    return rectangles
+        return rectangles
 
-def create_window(x_axis_size: tuple[int, int], y_axis_size: tuple[int, int]) -> None:
-    painter.xlim(x_axis_size[0], x_axis_size[1])
-    painter.ylim(y_axis_size[0], y_axis_size[1])
-    painter.grid(True)
-    painter.show()
+    def create_integral_rectangle(self, point: Point, delta_x: int, delta_x_shift: int) -> plt.Rectangle:
+        return plt.Rectangle((point.x - delta_x_shift, 0), delta_x, point.y, edgecolor='red', facecolor='red')
 
-def draw_integral_sum(start: int, end: int, accuracy:int, equipment: Equipment) -> None:
-    points = calculate_graph_points(start, end, accuracy)
-    rectangles = create_integral_shape(points, accuracy, equipment)
-    for rectangle in rectangles:
-        painter.gca().add_patch(rectangle)
-    create_window((start, end), (0, max(point.y for point in points)))
+    def create_window(self) -> None:
+        plt.xlim(self.__settings.start, self.__settings.end)
+        plt.ylim(0, max(point.y for point in self.__points))
+        plt.grid(linestyle="--",alpha=0.5,zorder=1)
+        plt.show()
+
+    def draw_integral_sum(self) -> None:
+        rectangles = self.create_integral_shape()
+        for rectangle in rectangles:
+            plt.gca().add_patch(rectangle)
+
+    def draw_graph(self) -> None:
+        settings_for_graph = Settings(
+            task = self.__settings.task,
+            start = self.__settings.start,
+            end = self.__settings.end,
+            accuracy = 1000000,
+            equipment = Equipment.RANDOM
+        )
+        points = CalculatorUtils.calculate_graph_points(settings_for_graph)
+        plt.plot([point.x for point in points], [point.y for point in points], color='black', linewidth=0.8)
+        
+    def draw(self) -> None:
+        self.draw_graph()
+        self.draw_integral_sum()
+        self.create_window()
+
+def read_settings(args: list[str]) -> Settings:
+    # if len(args) < 5:
+    #     print('Usage: python3 lab.py <start> <end> <accuracy> <equipment>')
+    #     sys.exit(1)
+
+    # settings = Settings(
+    #     task = 2,
+    #     start = int(args[1]),
+    #     end = int(args[2]),
+    #     accuracy = int(args[3]),
+    #     equipment = Equipment(int(args[4]))
+    # )
+    settings = Settings(
+        task = 2,
+        start = 0,
+        end = 1,
+        accuracy = 30,
+        equipment = Equipment.RANDOM
+    )
+    return settings
 
 if __name__ == '__main__':
-    if len(sys.argv) < 5:
-        print('Usage: python3 lab.py <start> <end> <accuracy> <equipment>')
-        sys.exit(1)
-
-    start = int(sys.argv[1])
-    end = int(sys.argv[2])
-    accuracy = int(sys.argv[3])
-    equipment = Equipment(int(sys.argv[4]))
-    draw_integral_sum(start, end, accuracy, equipment)
+    drawer = Drawer(read_settings(sys.argv))
+    drawer.draw()
