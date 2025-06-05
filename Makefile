@@ -3,5 +3,5 @@ git:
 	git commit -m "Update"
 	git push
 
-html:
-	open s4.html
+site:
+	python3 -m http.server 8000 --directory . --bind 127.0.0.1
